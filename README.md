@@ -54,4 +54,10 @@ npm run export:html
 
 `npm run build` regenerates the prebuilt `game.js`. Export again after source, style, or markup changes. Physics tests cover driving, reverse, steering, boost, recovery, safe frame steps, hover and landing. Add `?debug=1` to expose deterministic stepping, particle counts and renderer diagnostics through `window.__drive`.
 
+## Deploy to Vercel
+
+Import this repository with its root directory set to the repository root (`.`). The committed `vercel.json` configures a static site: it installs with `npm ci`, builds with `npm run build`, and publishes `dist/`. No Python server or environment variables are needed on Vercel.
+
+The build creates `dist/index.html`, `dist/style.css`, `dist/game.js`, and the car image under `dist/assets/`, together with the third-party license. It also retains the root `game.js` for local play and standalone exports. Generated `dist/` files do not need to be committed. Redeploy the latest `main` commit after pulling this configuration.
+
 Three.js is MIT licensed; see `THIRD_PARTY_LICENSES.txt`. The reference photo was supplied by the user. All scenery textures and vehicle geometry are generated in the game.
