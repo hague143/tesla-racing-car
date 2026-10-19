@@ -22,6 +22,8 @@ Click **Start Driving**, then use:
 | A / D or Left / Right | Steer |
 | S / Down | Brake; keep holding to reverse |
 | Space + accelerator | Power boost |
+| B / Horn button | Hold to sound the horn; tap for a short honk |
+| M / Sound button | Mute / unmute |
 | G / Vapor Jets button | Toggle white vapor exhaust |
 | F / Flight Mode button | Take off / land |
 | R | Return to the road and disable jets and flight |
@@ -33,6 +35,14 @@ Click **Start Driving**, then use:
 Flight automatically activates the four jets and smoothly lifts the car about 2.5 meters above the road. Steering, acceleration, braking and cameras remain available while flying. You can pass over traffic at full flight altitude. F lands while leaving vapor enabled; G can turn the vapor off and also lands a flying car. Scenery obstacles still obstruct the car when tall enough to reach it. There is no finish line.
 
 The onscreen jets and flight buttons work on phones, alongside touch steering, throttle, brake and boost. Best trip distance is saved locally when pausing, starting another drive, or leaving the page. Losing focus pauses automatically.
+
+## Sound
+
+Click **Start Driving** to enable sound. Electric motor pitch and road/wind noise follow speed and acceleration. Braking and hard cornering produce tire sounds on the ground. Vapor jets hiss, flight adds a turbine hum, and boosting adds a whoosh. The game also includes a dual-tone horn, reverse beeps, stereo traffic pass-bys, impacts, landing sounds, and startup/control chimes.
+
+Hold **B** or the horn button for a sustained horn. **M** or the header Sound button mutes/unmutes. Open the pause menu to adjust **Volume**. Volume and mute settings are saved in the browser. Pausing or leaving the game silences all sound and releases the horn.
+
+All audio is synthesized locally with Web Audio, so no audio downloads or external services are needed. Sound is also included in the standalone HTML export.
 
 ## Development
 
@@ -50,9 +60,10 @@ npm run export:html
 - `src/vehicles.js`: roadster, wing, jets and detailed traffic cars
 - `src/textures.js`: generated asphalt, foliage, moon, reflection and smoke textures
 - `src/effects.js`: pooled vapor particles
+- `src/audio.js`: real-time vehicle synthesis, effects, volume and mute
 - `scripts/export-html.mjs`: standalone HTML, defaulting to `/workspace/library-files/tesla-night-flight.html`; accepts an output path argument
 
-`npm run build` regenerates the prebuilt `game.js`. Export again after source, style, or markup changes. Physics tests cover driving, reverse, steering, boost, recovery, safe frame steps, hover and landing. Add `?debug=1` to expose deterministic stepping, particle counts and renderer diagnostics through `window.__drive`.
+`npm run build` regenerates the prebuilt `game.js`. Export again after source, style, or markup changes. Tests cover driving, reverse, steering, boost, recovery, safe frame steps, hover/landing, sound reactions, traffic panning, and audio settings. Add `?debug=1` to expose deterministic stepping, particle counts and renderer diagnostics through `window.__drive`.
 
 ## Deploy to Vercel
 

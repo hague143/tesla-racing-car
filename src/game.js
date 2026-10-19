@@ -3,10 +3,12 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { createVehicle } from './vehicles.js';
 import {noiseTexture,foliageTexture,environmentTexture,lightTexture,moonTexture} from './textures.js';
 import {createVapor} from './effects.js';
+import {createCarAudio} from './audio.js';
 import { createDrive, resetCar, stepDrive, roadCenter, roadHeading, clamp } from './physics.js';
 
 const $ = id => document.getElementById(id);
 const canvas = $('world');
+const audio = createCarAudio(updateAudioControls);
 let renderer;
 try {
   renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
@@ -207,6 +209,7 @@ let cooldown=0;
 let noticeTimer=0;
 let bestDistance=0;
 const keys=new Set();
+const hornSources=new Set();
 let lastTime=null;
 let hudTime=0;
 try{const saved=Number(localStorage.getItem('teslaOpenRoadBest'));if(Number.isFinite(saved)&&saved>0)bestDistance=saved;}catch{}
@@ -214,6 +217,28 @@ function saveBest() {
   if(drive.distance>bestDistance){bestDistance=drive.distance;try{localStorage.setItem('teslaOpenRoadBest',String(bestDistance));}catch{}}
 }
 function notify(text) {$('notice').textContent=text;noticeTimer=3;}
+function updateAudioControls() {
+  const sound=audio.snapshot();
+  $('sound').disabled=!sound.available;
+  $('sound').setAttribute('aria-pressed',String(!sound.muted));
+  $('sound').setAttribute('aria-label',sound.muted?'Enable sound (M)':'Mute sound (M)');
+  $('sound-label').textContent=!sound.available?'NO AUDIO':sound.muted?'SOUND OFF':'SOUND ON';
+  $('mute-mark').hidden=!sound.muted;
+  $('volume').value=String(Math.round(sound.volume*100));
+  $('volume-value').textContent=`${Math.round(sound.volume*100)}%`;
+}
+function setHorn(active,source='keyboard') {
+  if(active&&state==='running')hornSources.add(source);else hornSources.delete(source);
+  const held=state==='running'&&hornSources.size>0;
+  if(held)keys.add('KeyB');else keys.delete('KeyB');
+  $('horn').classList.toggle('is-honking',held);$('horn').setAttribute('aria-pressed',String(held));
+  audio.setHorn(held);
+}
+function releaseHorn() {hornSources.clear();setHorn(false);}
+function toggleSound() {
+  const muted=!audio.snapshot().muted;audio.setMuted(muted);
+  if(!muted)void audio.unlock();
+}
 function updateHUD() {
   $('distance').textContent=(drive.distance/1000).toFixed(2);
   $('speed').textContent=Math.round(Math.abs(drive.speed)*3.6);
@@ -222,7 +247,7 @@ function updateHUD() {
   $('energy-fill').style.width=`${drive.energy}%`;
   $('speed-arc').style.strokeDashoffset=100-clamp(Math.abs(drive.speed)*3.6/300,0,1)*100;
   $('road-status').textContent=drive.altitude>1?'FLIGHT MODE · ABOVE THE HIGHWAY':drive.offRoad?'OFF ROAD · EASY ON THE THROTTLE':drive.boosting?'MAXIMUM POWER · ALL ELECTRIC':'FOREST HIGHWAY · ENDLESS EXPLORATION';
-  $('vapor').disabled=$('flight').disabled=state!=='running';
+  $('vapor').disabled=$('flight').disabled=$('horn').disabled=state!=='running';
   $('vapor').setAttribute('aria-pressed',String(drive.vapor));
   $('flight').setAttribute('aria-pressed',String(drive.flying));
   $('vapor-label').textContent=drive.vapor?'ON':'OFF';
@@ -269,6 +294,7 @@ function positionCars(dt) {
     const lane=car.direction===1?-3.2:3.2;
     car.model.position.set(roadCenter(car.z)+lane,0,car.z);car.model.rotation.y=heading;
     if(state==='running'&&drive.altitude<1.35&&cooldown<=0&&Math.hypot(drive.x-car.model.position.x,drive.z-car.z)<3.6) {
+      audio.cue('impact',Math.min(1,Math.abs(drive.speed)/30+.2));
       drive.speed*=.15;drive.x+=drive.x<car.model.position.x?-1.3:1.3;cooldown=2;notify('Easy there. Give traffic a little room.');
     }
   }
@@ -294,6 +320,7 @@ function update(dt) {
     for(let i=center-1;i<=center+1;i++)for(const obstacle of chunks.get(i)?.userData.colliders||[]) {
       const dx=drive.x-obstacle.x,dz=drive.z-obstacle.z,distance=Math.hypot(dx,dz);
       if(distance<obstacle.radius+1&&drive.altitude<obstacle.height) {
+        audio.cue('impact',Math.min(1,Math.abs(drive.speed)/25+.15));
         const length=distance||1;drive.x+=dx/length*.7;drive.z+=dz/length*.7;drive.speed*=-.1;cooldown=2;notify('Press R to return to the road.');break;
       }
     }
@@ -306,22 +333,24 @@ function update(dt) {
   hudTime+=dt;if(hudTime>.08){updateHUD();hudTime=0;}
 }
 function startDrive() {
+  audio.setPlaying(false);releaseHorn();void audio.unlock();
   saveBest();
   const assist=drive.assist;drive=createDrive();drive.assist=assist;
   traffic.forEach((car,i)=>car.z=-75-i*66);
   state='running';cooldown=0;keys.clear();vapor.clear();$('garage').hidden=true;
+  audio.setPlaying(true);audio.cue('start');
   $('menu').hidden=true;$('pause-menu').hidden=true;$('controls').hidden=false;$('touch-controls').hidden=false;
   $('pause').disabled=false;$('pause').setAttribute('aria-label','Pause game');
   document.body.classList.add('is-driving');
   $('start').blur();
-  streamWorld();positionCars(0);updateCamera(0,true);updateHUD();notify('W to drive · F to fly / land · G for vapor jets');
+  streamWorld();positionCars(0);updateCamera(0,true);updateHUD();notify('W drive · B horn · F fly / land · G jets · M mute');
 }
 function pauseDrive() {
   if(state==='running') {
-    state='paused';keys.clear();saveBest();$('pause-menu').hidden=false;$('controls').hidden=true;$('touch-controls').hidden=true;
+    state='paused';keys.clear();releaseHorn();audio.setPlaying(false);saveBest();$('pause-menu').hidden=false;$('controls').hidden=true;$('touch-controls').hidden=true;
     $('pause').setAttribute('aria-label','Resume game');updateHUD();
   }else if(state==='paused') {
-    state='running';$('pause-menu').hidden=true;$('controls').hidden=false;$('touch-controls').hidden=false;
+    state='running';void audio.unlock();audio.setPlaying(true);$('pause-menu').hidden=true;$('controls').hidden=false;$('touch-controls').hidden=false;
     $('pause').setAttribute('aria-label','Pause game');$('resume').blur();updateHUD();
   }
 }
@@ -334,12 +363,14 @@ function toggleLighting() {
 function toggleFlight() {
   if(state!=='running')return;
   drive.flying=!drive.flying;if(drive.flying)drive.vapor=true;
+  audio.cue(drive.flying?'lift':'land');
   notify(drive.flying?'Lift jets engaged. Flying above the highway.':'Landing. The vapor jets remain available with G.');updateHUD();
 }
 function toggleVapor() {
   if(state!=='running')return;
   drive.vapor=!drive.vapor;
   if(!drive.vapor)drive.flying=false;
+  audio.cue(drive.vapor?'lift':'land',.5);
   notify(drive.vapor?'Vapor jets on. Press F to take flight.':'Vapor jets off. Returning to the road.');updateHUD();
 }
 function toggleCamera() {
@@ -350,49 +381,64 @@ function toggleAssist() {
   drive.assist=!drive.assist;$('assist').setAttribute('aria-pressed',String(drive.assist));$('assist').querySelector('span').textContent=drive.assist?'ON':'OFF';
   if(state==='running')notify(drive.assist?'Steering assist on. Follow the curve.':'Steering assist off. You have full control.');
 }
+$('sound').addEventListener('click',toggleSound);
+$('volume').addEventListener('input',event=>audio.setVolume(Number(event.target.value)/100));
 $('flight').addEventListener('click',toggleFlight);$('vapor').addEventListener('click',toggleVapor);
 $('start').addEventListener('click',startDrive);$('resume').addEventListener('click',pauseDrive);$('pause').addEventListener('click',pauseDrive);
 $('new-drive').addEventListener('click',startDrive);$('lighting').addEventListener('click',toggleLighting);$('camera').addEventListener('click',toggleCamera);$('assist').addEventListener('click',toggleAssist);
-const controlled=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'];
+const controlled=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD','KeyB'];
 window.addEventListener('keydown',event=>{
   if(event.ctrlKey||event.metaKey||event.altKey)return;
+  if(event.target?.matches?.('input[type="range"]')&&event.code.startsWith('Arrow'))return;
   if(controlled.includes(event.code)) {
     if((event.code==='Space')&&document.activeElement?.tagName==='BUTTON'&&state!=='running')return;
     event.preventDefault();
-    if(state==='running')keys.add(event.code);
+    if(state==='running'){void audio.unlock();if(event.code==='KeyB')setHorn(true);else keys.add(event.code);}
   }
   if(event.repeat)return;
+  if(event.code==='KeyM')toggleSound();
   if(event.code==='KeyP'||event.code==='Escape')pauseDrive();
   if(event.code==='KeyF')toggleFlight();
   if(event.code==='KeyG')toggleVapor();
   if(event.code==='KeyC')toggleCamera();
   if(event.code==='KeyH')toggleAssist();
-  if(event.code==='KeyR'&&state==='running'){resetCar(drive);positionCars(0);updateCamera(0,true);notify('Back on the road.');updateHUD();}
+  if(event.code==='KeyR'&&state==='running'){audio.cue('reset');resetCar(drive);positionCars(0);updateCamera(0,true);notify('Back on the road.');updateHUD();}
 });
-window.addEventListener('keyup',event=>keys.delete(event.code));
+window.addEventListener('keyup',event=>{keys.delete(event.code);if(event.code==='KeyB')setHorn(false);});
 window.addEventListener('blur',()=>{keys.clear();if(state==='running')pauseDrive();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='running')pauseDrive();});
-window.addEventListener('pagehide',saveBest);
+window.addEventListener('pagehide',()=>{saveBest();releaseHorn();audio.setPlaying(false);});
 for(const[id,code]of [['left','ArrowLeft'],['right','ArrowRight'],['throttle','ArrowUp'],['brake','ArrowDown'],['boost','Space']]) {
   const button=$(id);
-  button.addEventListener('pointerdown',event=>{event.preventDefault();button.setPointerCapture(event.pointerId);if(state==='running')keys.add(code);});
+  button.addEventListener('pointerdown',event=>{event.preventDefault();button.setPointerCapture(event.pointerId);if(state==='running'){void audio.unlock();keys.add(code);}});
   for(const event of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(event,()=>keys.delete(code));
 }
+const hornButton=$('horn');
+hornButton.addEventListener('pointerdown',event=>{
+  event.preventDefault();hornButton.setPointerCapture(event.pointerId);void audio.unlock();setHorn(true,`pointer:${event.pointerId}`);
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])hornButton.addEventListener(event,e=>setHorn(false,`pointer:${e.pointerId}`));
+hornButton.addEventListener('keydown',event=>{if(['Space','Enter'].includes(event.code)){event.preventDefault();event.stopPropagation();void audio.unlock();setHorn(true,'button');}});
+hornButton.addEventListener('keyup',event=>{if(['Space','Enter'].includes(event.code)){event.preventDefault();event.stopPropagation();setHorn(false,'button');}});
+hornButton.addEventListener('click',event=>{
+  if(event.detail===0&&!hornSources.size&&state==='running'){void audio.unlock();setHorn(true,'activation');setTimeout(()=>setHorn(false,'activation'),220);}
+});
 function resize() {
   const width=window.innerWidth,height=window.innerHeight;
   renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
 }
 window.addEventListener('resize',resize);
-streamWorld();positionCars(0);updateCamera(0,true);updateHUD();resize();
+streamWorld();positionCars(0);updateCamera(0,true);updateHUD();updateAudioControls();resize();
 // A development-only hook enables deterministic physics and streaming checks without waiting for real-time GPU rendering.
 if(new URLSearchParams(location.search).has('debug'))window.__drive={
-  get data(){return drive;},get state(){return state;},get chunks(){return chunks.size;},get particles(){return vapor.activeCount;},get vehicle(){return tesla;},get renderer(){return renderer;},get traffic(){return traffic;},get camera(){return mode;},get night(){return night;},
+  get audio(){return audio;},get data(){return drive;},get state(){return state;},get chunks(){return chunks.size;},get particles(){return vapor.activeCount;},get vehicle(){return tesla;},get renderer(){return renderer;},get traffic(){return traffic;},get camera(){return mode;},get night(){return night;},
   step:update,start:startDrive,keys,reset:()=>{resetCar(drive);positionCars(0);updateCamera(0,true);},
 };
 function frame(time) {
   const dt=lastTime===null?0:Math.min((time-lastTime)/1000,.2);lastTime=time;
   let remaining=dt;
   while(remaining>0){const step=Math.min(remaining,1/60);update(step);remaining-=step;}
+  if(state==='running')audio.update(drive,{throttle:keys.has('KeyW')||keys.has('ArrowUp'),brake:keys.has('KeyS')||keys.has('ArrowDown'),horn:keys.has('KeyB')},traffic);
   if(state!=='paused')updateCamera(dt);
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
