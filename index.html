@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="icon" href="data:,"><meta name="theme-color" content="#020409"><title>Tesla — Night Flight</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="game">
+    <canvas id="world" aria-label="A 3D endless driving game with a graphite Tesla-inspired jetpack roadster, a winding road, realistic tree silhouettes, a starry night sky, streetlights and traffic."></canvas>
+    <div class="vignette"></div>
+    <header>
+      <div class="brand"><span class="wordmark">TESLA</span><span class="brand-divider"></span><span class="brand-sub">NIGHT FLIGHT</span></div>
+      <nav aria-label="Game settings">
+        <button id="lighting" class="setting" aria-label="Toggle headlights" aria-pressed="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/><path d="M10 1v2m0 14v2M1 10h2m14 0h2M4 4l1.5 1.5m9 9L16 16M4 16l1.5-1.5m9-9L16 4"/></svg><span id="lighting-label">HEADLIGHTS ON</span></button>
+        <button id="camera" class="setting"><svg viewBox="0 0 20 20"><path d="M2 6h4l2-3h4l2 3h4v11H2Z"/><circle cx="10" cy="11" r="3"/></svg><span id="camera-label">CHASE CAM</span></button>
+        <button id="pause" class="setting icon-only" aria-label="Pause game" disabled><svg viewBox="0 0 20 20"><path d="M7 4v12m6-12v12"/></svg></button>
+      </nav>
+    </header>
+    <div class="trip" id="trip"><span class="live-dot"></span><span>FREE DRIVE</span><span class="trip-separator">/</span><strong id="distance">0.00</strong><span>KM</span></div>
+    <div class="jet-controls" aria-label="Jetpack controls">
+      <button id="vapor" aria-label="Toggle vapor jets" aria-pressed="false" disabled><kbd>G</kbd><span>VAPOR JETS<strong id="vapor-label">OFF</strong></span><i></i></button>
+      <button id="flight" aria-label="Fly or land" aria-pressed="false" disabled><kbd>F</kbd><span>FLIGHT MODE<strong id="flight-label">GROUNDED</strong></span><i></i></button>
+      <div class="altitude"><strong id="altitude">0.0</strong><span>M / ALTITUDE</span></div>
+    </div>
+    <aside id="garage" class="garage"><img src="assets/reference-car.avif" alt="Your reference car with a rear wing, red light bar, and four vapor jets"><div><span>YOUR REFERENCE / RECREATED IN 3D</span><strong>Roadster. Jetpack equipped.</strong></div></aside>
+    <section id="menu" class="menu">
+      <p class="eyebrow"><span></span> AFTER DARK. ABOVE IT ALL.</p>
+      <h1>Own the<br><em>dark.</em></h1>
+      <p class="intro">A graphite roadster. Four vapor jets.<br>Drive the night. Rise above the road.</p>
+      <button id="start" class="primary">START DRIVING <svg viewBox="0 0 20 20"><path d="M4 16 16 4M4 4h12v12"/></svg></button>
+      <p class="menu-help"><kbd>W A S D</kbd> TO DRIVE <span>·</span> <kbd>F</kbd> FLY <span>·</span> <kbd>G</kbd> VAPOR JETS</p>
+    </section>
+    <section id="pause-menu" class="pause-menu" hidden>
+      <p class="eyebrow">A MOMENT OF QUIET</p><h2>Enjoy the view.</h2><p>Your drive is paused.</p>
+      <button id="resume" class="primary">KEEP DRIVING <svg viewBox="0 0 20 20"><path d="M4 16 16 4M4 4h12v12"/></svg></button>
+      <button id="new-drive" class="text-button">START A NEW DRIVE</button>
+    </section>
+    <div class="location">
+      <div class="route-icon"><svg viewBox="0 0 50 68"><path d="M22 63c0-14 25-9 25-25S5 31 5 16 22 7 22 2"/><path d="M22 63c0-14 25-9 25-25S5 31 5 16 22 7 22 2" class="route-dashes"/><path class="route-arrow" d="m16 63 6-9 6 9Z"/></svg></div>
+      <div><span class="eyebrow">NORTH COAST</span><strong>The midnight route.</strong><span id="road-status">NIGHT HIGHWAY · ENDLESS EXPLORATION</span></div>
+    </div>
+    <div class="vehicle-tag"><span class="tag-line"></span><div><strong>ROADSTER / JETPACK</strong><span>GRAPHITE · FOUR LIFT JETS</span></div></div>
+    <div class="telemetry">
+      <div class="speed-dial"><svg viewBox="0 0 180 130"><path class="dial-background" d="M25 108a75 75 0 1 1 130 0"/><path id="speed-arc" d="M25 108a75 75 0 1 1 130 0" pathLength="100"/><path class="dial-ticks" d="M32 104a67 67 0 1 1 116 0"/></svg><div class="speed-value"><span id="gear">P</span><strong id="speed">0</strong><small>KM/H</small></div></div>
+      <div class="boost-label"><span>POWER BOOST</span><strong id="energy-label">100%</strong></div><div class="boost-track"><div id="energy-fill"></div></div>
+    </div>
+    <div id="controls" class="controls" hidden><span><kbd>W</kbd> Accelerate</span><span><kbd>A</kbd><kbd>D</kbd> Steer</span><span><kbd>S</kbd> Brake / reverse</span><span><kbd>SPACE</kbd> Boost</span><span><kbd>F</kbd> Fly / land</span><span><kbd>G</kbd> Vapor jets</span><span><kbd>R</kbd> Reset car</span><span><kbd>P</kbd> Pause</span></div>
+    <div class="assist"><button id="assist" aria-pressed="true"><i></i> STEERING ASSIST <span>ON</span></button><small id="best">BEST DRIVE 0.00 KM</small></div>
+    <div id="notice" role="status" aria-live="polite"></div>
+    <div class="touch-controls" id="touch-controls" hidden><div><button id="left" aria-label="Steer left">←</button><button id="right" aria-label="Steer right">→</button></div><div><button id="boost" aria-label="Boost">BOOST</button><button id="brake" aria-label="Brake or reverse">BRAKE</button><button id="throttle" aria-label="Accelerate">GO</button></div></div>
+    <p class="credit">An independent Tesla-inspired driving experience.</p>
+    <div id="error" class="error" hidden><h2>3D graphics are unavailable.</h2><p>Open this game in a browser with WebGL 2 and hardware acceleration enabled.</p></div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
