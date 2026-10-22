@@ -3,14 +3,14 @@
 ## Installation, build, and logic
 
 - Clean `npm ci --no-audit --no-fund`: passed, Node 24.19.0 / npm 11.9.0.
-- `npm test`: **17 passed, 0 failed, 0 skipped**.
+- `npm test`: **20 passed, 0 failed, 0 skipped**.
 - Strict TypeScript check and `npm run build`: passed.
 - Deployable `public/index.html`, hashed CSS/JS, and license were generated. JavaScript is approximately 561 KB / 150 KB gzip.
 - Vite development server startup and transpiled TypeScript entry returned HTTP 200.
 - `npm run export:html`: generated the self-contained playable HTML.
 - `git diff --check`: passed.
 
-Tests cover frame-independent automatic driving, lane settling, jump gravity/landing, roll completion, boost depletion/lock/recharge, swept high-speed collisions and airborne clearance, pickups/near misses, 1,000 fair generated rows, bounded difficulty, state transitions, defensive record persistence, sound mixing, export replacement-token preservation, and the actual optional leaderboard HTTP service. Backend checks include score validation, Monday-UTC reset calculation, real submissions, filters, one-use tickets, origin restrictions, and rate limiting.
+Tests cover frame-independent automatic driving, lane settling, jump gravity/landing, roll completion, boost depletion/lock/recharge, swept high-speed collisions and airborne clearance, one-time +200 traffic launches, fatal hurdles during launches, pickups/near misses, 1,000 denser fair generated rows, bounded difficulty, state transitions, defensive record persistence, sound mixing, export replacement-token preservation, and the actual optional leaderboard HTTP service. Backend checks include score validation, Monday-UTC reset calculation, real submissions, filters, one-use tickets, origin restrictions, and rate limiting.
 
 ## Browser gameplay
 
@@ -25,13 +25,15 @@ Verified:
 - Web Audio context is running after Play, with a nonzero measured waveform.
 - Pause freezes elapsed time and silences sound; resume preserves the run.
 - Mute produces a silent measured waveform.
-- Collisions show results; three repeated keyboard restarts reset rolls, distance, energy, inputs, and effects.
+- Traffic-car hits launch the white player car, award +200 once per car, and keep PLAYING active. Landing and pause/resume during a launch work.
+- Orange hurdle collisions show **Try Again** and preserve the final score. A nearby hurdle remains lethal during launch until physically cleared. Three repeated restarts reset traffic-hit counters and per-car hit flags.
+- Runs begin with at least ten traffic cars; generated rows retain a free lane and include at most one stationary hurdle.
 - Score records, pilot identity, volume, and settings survive reload.
 - English/Spanish selection, settings, and ranking dimension controls work.
 - Unconfigured rankings are explicitly unavailable and never block starting a run.
 - Early unsupported-graphics errors give useful guidance and Retry works.
 - Actual `WEBGL_lose_context` loss enters ERROR; Retry rebuilds on a fresh canvas.
-- Mobile touchscreen steering, jump, roll, and held boost work without page scrolling.
+- Mobile touchscreen steering, jump, roll, held boost, and Try Again work without page scrolling; rolls also complete during traffic-hit launches.
 - Portrait/landscape resizing preserves the run. Screens at 390 × 844, 320 × 568, and 844 × 390 were inspected.
 - Portrait camera checks keep the full car visible across all four lanes at 390px and 320px widths.
 - Touch action targets are at least 44px high; the small-screen title stays on two lines.

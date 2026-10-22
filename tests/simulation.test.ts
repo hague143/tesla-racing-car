@@ -37,10 +37,34 @@ test('swept collision detects a high-speed crossing but lets an airborne car cle
   assert(!sweptBox([0, 3, 20], [0, 3, -20], [1, 1, 4]));
   const r = empty(), car = { ...r.obstacles[0], active: true, x: r.x, prevZ: -10, z: 10 };
   assert(hitsTraffic(r, car)); r.y = r.prevY = 2.5; assert(!hitsTraffic(r, car));
-  r.y = r.prevY = 0; Object.assign(r.obstacles[0], car, { z: -3.6, prevZ: -3.6 });
+  r.y = r.prevY = 0; Object.assign(r.obstacles[0], car, { z: -2, prevZ: -2, variant: 2, speed: 0, height: 1.05, length: 1.1 });
   let collision = 0; simulate(r, emptyCommands(), 1 / 120, e => { if (e === 'collision') collision++; });
   assert(!r.alive); assert.equal(collision, 1); const distance = r.distance;
   simulate(r, emptyCommands(), 1 / 120); assert.equal(r.distance, distance);
+});
+test('traffic collisions launch the player and award 200 points only once per car', () => {
+  for (const variant of [0, 1]) {
+    const r = empty(), car = r.obstacles[0], events: string[] = [];
+    Object.assign(car, { active: true, x: r.x, z: -3.5, prevZ: -3.5, variant });
+    simulate(r, emptyCommands(), 1 / 120, e => events.push(e));
+    assert(r.alive && r.y > 0 && r.vy > 11.5); assert.equal(r.trafficHits, 1);
+    assert(r.score >= 200); assert.equal(events.filter(e => e === 'ram').length, 1);
+    assert(!events.includes('collision')); assert(car.hit && car.nearMissed);
+    step(r, .4); assert(r.y > 2 && r.alive); assert.equal(r.trafficHits, 1);
+    // Landing against the same car cannot farm the bonus.
+    r.y = r.prevY = r.vy = 0; car.z = car.prevZ = -2;
+    step(r, .1); assert.equal(r.trafficHits, 1); assert.equal(r.nearMisses, 0); assert.equal(r.vy, 0);
+    const fresh = createRun(); assert.equal(fresh.trafficHits, 0); assert(fresh.obstacles.every(o => !o.hit));
+  }
+});
+test('hurdles still end a run during a traffic launch, but can be cleared by jumping', () => {
+  const r = empty();
+  Object.assign(r.obstacles[0], { active: true, x: r.x, z: -3.5, variant: 0 });
+  Object.assign(r.obstacles[1], { active: true, x: r.x, z: -2, variant: 2, speed: 0, height: 1.05, length: 1.1 });
+  step(r, .02); assert.equal(r.trafficHits, 1); assert(!r.alive);
+  const airborne = empty(); airborne.y = airborne.prevY = 2.5;
+  Object.assign(airborne.obstacles[0], { active: true, x: airborne.x, z: -2, variant: 2, speed: 0, height: 1.05, length: 1.1 });
+  step(airborne, .03); assert(airborne.alive); assert.equal(airborne.trafficHits, 0);
 });
 test('pickups refill energy once and near misses score once', () => {
   const r = empty(); r.energy = 15; Object.assign(r.pickupsPool[0], { active: true, lane: 1, z: -2.9, prevZ: -2.9 });
@@ -55,14 +79,21 @@ test('pickups refill energy once and near misses score once', () => {
 test('generated traffic always leaves a connected, reachable corridor with bounded density', () => {
   const r = empty(887); r.distance = 35000;
   for (let i = 0; i < 1000; i++) {
-    r.obstacles.forEach(o => o.active = false); r.pickupsPool.forEach(p => p.active = false);
+    r.obstacles.forEach(o => { o.active = false; o.hit = true; }); r.pickupsPool.forEach(p => p.active = false);
     const previous = r.lastSafeLane; spawnRow(r, -420);
     const active = r.obstacles.filter(o => o.active);
-    assert(active.length >= 1 && active.length <= 3);
+    assert(active.length >= 2 && active.length <= 3);
+    assert(active.filter(o => o.variant !== 2).length >= 2);
+    assert(active.filter(o => o.variant === 2).length <= 1);
     assert(!active.some(o => o.lane === r.lastSafeLane)); assert(Math.abs(previous - r.lastSafeLane) <= 1);
-    assert(rowSpacing(66, i / 1000) / 66 >= 2.25);
-    assert(active.every(o => o.speed === 18));
+    assert(rowSpacing(66, i / 1000) / 66 >= 1.95);
+    assert(active.every(o => o.speed === (o.variant === 2 ? 0 : 18) && !o.hit));
   }
+});
+test('a new run starts with at least ten traffic cars and a stationary hurdle', () => {
+  const active = createRun().obstacles.filter(o => o.active);
+  assert(active.filter(o => o.variant !== 2).length >= 10);
+  assert(active.some(o => o.variant === 2 && o.speed === 0));
 });
 test('speed and traffic difficulty increase within limits over a long run', () => {
   const r = empty(); step(r, 600); assert(r.speed <= 61.01 && r.speed > 60); assert(r.energy <= 100);

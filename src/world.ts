@@ -10,7 +10,7 @@ export class World {
   renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(55, 1, .1, 1800);
-  player = createVehicle({ player: true, color: '#c41e30' });
+  player = createVehicle({ player: true, color: '#f3f5f7' });
   private pivot = new THREE.Group();
   private road: Road;
   private effects: Effects;
@@ -109,6 +109,7 @@ export class World {
     this.pivot.position.set(preview ? 2.4 : run.x, (preview ? 0 : run.y) + .7, 0);
     this.pivot.rotation.set(0, 0, preview ? 0 : run.roll);
     this.player.rotation.y = preview ? -.16 : THREE.MathUtils.clamp((run.x - run.prevX) * -3, -.28, .28);
+    this.player.rotation.x = preview || this.settings.reducedMotion || run.y === 0 ? 0 : THREE.MathUtils.clamp(run.vy * .012, -.1, .15);
     this.player.rotation.z = preview || this.settings.reducedMotion ? 0 : (run.prevX - run.x) * -.6;
     this.player.position.y = -.7 + (preview || frozen || this.settings.reducedMotion ? 0 : Math.sin(time * 16) * .006);
     if (!frozen && !preview) this.wheel += run.speed * dt / .4;

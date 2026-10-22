@@ -60,6 +60,7 @@ function event(kind: SimEvent) {
   if (kind === 'pickup') { audio.cue('pickup'); world?.burst(kind, run); }
   if (kind === 'landing') { audio.cue('landing', .4); world?.burst(kind, run); }
   if (kind === 'near') audio.cue('near');
+  if (kind === 'ram') { audio.cue('impact', .3); audio.cue('jump'); world?.burst(kind, run); }
   if (kind === 'collision') world?.burst(kind, run);
 }
 function finish() {

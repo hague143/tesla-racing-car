@@ -22,7 +22,7 @@
   <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
 </defs></svg>
 <main id="app">
-  <canvas id="world" aria-label="Interactive 3D night highway with a red Tesla-inspired sports car"></canvas>
+  <canvas id="world" aria-label="Interactive 3D night highway with a white Tesla-inspired sports car"></canvas>
   <div class="scene-shade" aria-hidden="true"></div>
   <header class="topbar" id="topbar" hidden>
     <a class="brand" href="#" id="brand-home" aria-label="Night Shift main menu"><i class="brand-mark" aria-hidden="true"></i><span>NIGHT<span class="brand-light">SHIFT</span><small>AFTER HOURS. ALL IN.</small></span></a>
@@ -41,7 +41,7 @@
     <div class="eyebrow"><span class="status-dot"></span><span data-t="tagline">THE CITY SLEEPS. YOU DON’T.</span></div>
     <h1><span id="title-first">TESLA</span><span id="title-second">NIGHT SHIFT</span><i class="title-period">.</i></h1>
     <p class="menu-intro" data-t="intro">Own the night. Find your line.</p>
-    <p class="menu-description" data-t="description">Dodge traffic, take flight, and push past your best.</p>
+    <p class="menu-description" data-t="description">Hit traffic to take flight. Watch out for hurdles.</p>
     <div class="records">
       <div><span data-t="best">ALL-TIME BEST</span><strong id="menu-best">0</strong><small data-t="score">SCORE</small></div>
       <div><span data-t="distance">DISTANCE</span><strong id="menu-distance">0.00<small> KM</small></strong><small data-t="personalRecord">PERSONAL RECORD</small></div>
@@ -53,7 +53,7 @@
       <button data-panel="controls"><svg><use href="#i-controls"/></svg><span data-t="controls">Controls</span></button>
     </nav>
   </section>
-  <div class="scene-caption" id="scene-caption" hidden><span>01 <i></i> <span data-t="night">NIGHT HIGHWAY</span></span><strong>REDLINE ROADSTER</strong><small data-t="original">ORIGINAL ARCADE DRIVING</small></div>
+  <div class="scene-caption" id="scene-caption" hidden><span>01 <i></i> <span data-t="night">NIGHT HIGHWAY</span></span><strong>WHITEOUT ROADSTER</strong><small data-t="original">ORIGINAL ARCADE DRIVING</small></div>
   <footer id="footer" hidden>
     <p data-t="independent">Independent fan game. Not affiliated with Tesla, Inc.</p>
     <nav><button data-panel="privacy" data-t="privacy">Privacy</button><button data-panel="terms" data-t="terms">Terms</button><button data-panel="about" data-t="about">About</button><a id="support-link" hidden data-t="support">Support</a><label class="language-label"><span aria-hidden="true">◎</span><select id="language" aria-label="Language"><option value="en">EN</option><option value="es">ES</option></select></label></nav>
@@ -73,7 +73,7 @@
     <section class="card state-card" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="eyebrow" data-t="pause">Pause</div><h2 id="pause-title" data-t="paused">TAKE A BREATHER.</h2><p data-t="pauseText">Your run is right where you left it.</p><button class="primary" id="resume-button" data-t="resume">RESUME</button><button class="secondary" data-panel="settings" data-t="settings">Settings</button><button class="text-button" id="pause-menu-button" data-t="menu">MAIN MENU</button></section>
   </div>
   <div class="overlay" id="over-overlay" hidden>
-    <section class="card state-card gameover-card" role="dialog" aria-modal="true" aria-labelledby="over-title"><div class="eyebrow" id="record-label" data-t="over">END OF THE ROAD.</div><h2 id="over-title" data-t="over">END OF THE ROAD.</h2><p data-t="collision">Traffic caught up. The next run is yours.</p><div class="result-grid"><div><span data-t="finalScore">FINAL SCORE</span><strong id="final-score">0</strong></div><div><span data-t="finalDistance">DISTANCE DRIVEN</span><strong><b id="final-distance">0.00</b><small> KM</small></strong></div></div><div class="best-line"><span data-t="bestComparison">PERSONAL BEST</span><b id="final-best">0</b></div><p class="local-status" id="local-status"></p><p class="submission-status" id="submission-status" aria-live="polite"></p><button class="primary" id="again-button"><span data-t="again">PLAY AGAIN</span><kbd>R</kbd></button><button class="text-button" id="over-menu-button" data-t="menu">MAIN MENU</button></section>
+    <section class="card state-card gameover-card" role="dialog" aria-modal="true" aria-labelledby="over-title"><div class="eyebrow" id="record-label" data-t="over">END OF THE ROAD.</div><h2 id="over-title" data-t="over">END OF THE ROAD.</h2><p data-t="collision">You hit a hurdle. Try again and chase your best.</p><div class="result-grid"><div><span data-t="finalScore">FINAL SCORE</span><strong id="final-score">0</strong></div><div><span data-t="finalDistance">DISTANCE DRIVEN</span><strong><b id="final-distance">0.00</b><small> KM</small></strong></div></div><div class="best-line"><span data-t="bestComparison">PERSONAL BEST</span><b id="final-best">0</b></div><p class="local-status" id="local-status"></p><p class="submission-status" id="submission-status" aria-live="polite"></p><button class="primary" id="again-button"><span data-t="again">TRY AGAIN</span><kbd>R</kbd></button><button class="text-button" id="over-menu-button" data-t="menu">MAIN MENU</button></section>
   </div>
   <div class="overlay modal-overlay" id="panel-overlay" hidden>
     <section class="card panel-card" role="dialog" aria-modal="true" aria-labelledby="panel-title" tabindex="-1">

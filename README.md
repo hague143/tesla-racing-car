@@ -1,6 +1,6 @@
 # Tesla Night Shift
 
-An original, playable night-highway arcade game built with **TypeScript, Vite, and Three.js**. Drive a detailed red Tesla-inspired roadster through traffic, jump over obstacles, perform airborne rolls, collect energy cells, and boost toward a personal record. This is an independent fan game with original procedural assets, not an official Tesla product.
+An original, playable night-highway arcade game built with **TypeScript, Vite, and Three.js**. Drive a detailed white Tesla-inspired roadster through dense traffic, launch upward by hitting other cars, jump over hurdles, perform airborne rolls, collect energy cells, and boost toward a personal record. This is an independent fan game with original procedural assets, not an official Tesla product.
 
 The live Roadster Dash website could not be accessed from this environment. The implementation follows the user-supplied interface and fallback gameplay brief. See [REFERENCE.md](REFERENCE.md) for the exact evidence boundary.
 
@@ -41,7 +41,7 @@ Forward movement is automatic. Each press changes one lane; holding a direction 
 
 Mobile has two steering pads, Jump, Roll, and a hold-to-Boost button. Pointer capture handles releases outside buttons and interruptions. Page scrolling is disabled during play. No swipe gestures are needed.
 
-Rolls earn 250 points, close passes 100, and gold energy cells 75 plus 30 energy. Distance contributes to score with a gradual survival multiplier. Boost consumes limited energy, locks until 25% after depletion, and recharges automatically. Collisions end the run; restarting resets the simulation and pools without reloading the page. Pause, focus loss, and hidden tabs freeze the simulation and silence driving audio.
+Hitting a traffic car launches your car upward and earns **200 points once per car**. Rolls earn 250 points, close passes 100, and gold energy cells 75 plus 30 energy. Distance contributes to score with a gradual survival multiplier. Boost consumes limited energy, locks until 25% after depletion, and recharges automatically. Hitting an orange road hurdle ends the run and shows **Try Again**; traffic-car collisions keep the run going. Restarting resets the simulation and pools without reloading the page. Pause, focus loss, and hidden tabs freeze the simulation and silence driving audio.
 
 ## Settings and saved data
 
@@ -93,7 +93,7 @@ Optional backend failures time out after 6.5 seconds and never block game loadin
 | `src/vehicles.js`, `src/textures.js` | Original procedural geometry/textures |
 | `src/config.ts` | Game name, logo, attribution, support/contact links and public service URL |
 
-The simulation uses 120 Hz fixed steps and a bounded frame accumulator. AABB sweeps include changing jump height to prevent high-speed tunneling. Cosmetic roll rotation is independent of the collision shape. Equal-speed traffic rows preserve their spacing; adjacent reserved escape lanes have at least 2.25 seconds between rows at maximum relative boost speed. Density and cruise speed increase gradually within limits.
+The simulation uses 120 Hz fixed steps and a bounded frame accumulator. AABB sweeps include changing jump height to prevent high-speed tunneling. Cosmetic roll rotation is independent of the collision shape. Five initial rows carry at least two traffic cars each; later rows carry two or three occupied lanes and retain an adjacent reserved escape lane. Traffic rows have at least 1.95 seconds between them at maximum relative boost speed. Stationary orange hurdles are limited to one every third row. Density and cruise speed increase gradually within limits. Each traffic car can award its launch bonus only once; reusing a pooled car resets that flag. Hurdles remain collidable while launching unless the car actually clears their height.
 
 The renderer caps pixel ratio, offers low-quality mode without shadows, uses instancing, and recycles road/traffic/pickup/particle pools. Resize and orientation changes preserve a run. The graphics context is checked early; failures and context loss offer an explicit Retry action that rebuilds resources on a fresh canvas. Menus have keyboard focus handling and modal focus containment.
 

@@ -171,7 +171,7 @@ export class UI {
     this.noticeTime -= dt; if (this.noticeTime <= 0) el('notice').textContent = '';
   }
   event(event: SimEvent) {
-    const key = ({ jump: 'jumpCue', roll: 'rollCue', pickup: 'pickupCue', near: 'nearCue' } as const)[event as 'jump' | 'roll' | 'pickup' | 'near'];
+    const key = ({ jump: 'jumpCue', roll: 'rollCue', pickup: 'pickupCue', near: 'nearCue', ram: 'ramCue' } as const)[event as 'jump' | 'roll' | 'pickup' | 'near' | 'ram'];
     if (key) { el('notice').textContent = this.t(key); this.noticeTime = 1.2; }
   }
   gameOver(run: Run, newRecord: boolean, stored: boolean) {

@@ -9,4 +9,7 @@ export const LANES = [-5.25, -1.75, 1.75, 5.25];
 export const STEP = 1 / 120;
 export const GRAVITY = 22;
 export const JUMP_VELOCITY = 11.5;
+export const TRAFFIC_HIT_POINTS = 200;
+export const TRAFFIC_LAUNCH_SPEED = 12.5;
+export const TRAFFIC_SPAWN_Z = -570;
 export const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));

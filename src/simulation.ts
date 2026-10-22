@@ -1,4 +1,4 @@
-import { clamp, GRAVITY, JUMP_VELOCITY, LANES } from './config';
+import { clamp, GRAVITY, JUMP_VELOCITY, LANES, TRAFFIC_HIT_POINTS, TRAFFIC_LAUNCH_SPEED, TRAFFIC_SPAWN_Z } from './config';
 import { hitsTraffic, sweptBox } from './collisions';
 import { rowSpacing, spawnRow } from './traffic';
 import type { Commands, Run, SimEvent } from './types';
@@ -8,17 +8,16 @@ export function createRun(seed = 1927): Run {
     x: LANES[1], prevX: LANES[1], lane: 1, y: 0, prevY: 0, vy: 0,
     speed: 32, distance: 0, elapsed: 0, score: 0, energy: 100, boosting: false, boostLocked: false,
     roll: 0, rollTime: -1, rollDuration: .65, rollDirection: 1, rolls: 0, nearMisses: 0,
-    pickups: 0, jumpCooldown: 0, alive: true, nextRow: 110, rowIndex: 0, seed, lastSafeLane: 1,
+    pickups: 0, trafficHits: 0, jumpCooldown: 0, alive: true, nextRow: 125, rowIndex: 0, seed, lastSafeLane: 1,
     obstacles: Array.from({ length: 36 }, (_, id) => ({ active: false, id, lane: 0, x: 0, z: 0,
-      prevZ: 0, speed: 18, height: 1.5, length: 4.75, width: 1.9, variant: 0, nearMissed: false })),
+      prevZ: 0, speed: 18, height: 1.5, length: 4.75, width: 1.9, variant: 0, nearMissed: false, hit: false })),
     pickupsPool: Array.from({ length: 12 }, () => ({ active: false, lane: 0, z: 0, prevZ: 0, phase: 0 })),
   };
-  for (const z of [-110, -280, -450]) spawnRow(run, z);
-  run.nextRow = 175;
+  for (const z of [-70, -195, -320, -445, TRAFFIC_SPAWN_Z]) spawnRow(run, z);
   return run;
 }
 export const emptyCommands = (): Commands => ({ lane: 0, jump: false, roll: 0, boost: false, brake: false, horn: false });
-const calculateScore = (run: Run) => Math.floor(run.distance * (1 + Math.min(run.elapsed / 600, .5)) + run.rolls * 250 + run.nearMisses * 100 + run.pickups * 75);
+const calculateScore = (run: Run) => Math.floor(run.distance * (1 + Math.min(run.elapsed / 600, .5)) + run.rolls * 250 + run.nearMisses * 100 + run.pickups * 75 + run.trafficHits * TRAFFIC_HIT_POINTS);
 
 // Called only with fixed steps by the loop. It has no DOM, Three.js, clock, or audio dependencies.
 export function simulate(run: Run, input: Commands, dt: number, emit: (event: SimEvent) => void = () => {}) {
@@ -63,7 +62,16 @@ export function simulate(run: Run, input: Commands, dt: number, emit: (event: Si
   for (const car of run.obstacles) {
     if (!car.active) continue;
     car.prevZ = car.z; car.z += (run.speed - car.speed) * dt;
-    if (hitsTraffic(run, car)) { run.alive = false; run.score = calculateScore(run); emit('collision'); return; }
+    if (!car.hit && hitsTraffic(run, car)) {
+      if (car.variant === 2) {
+        run.alive = false; run.score = calculateScore(run); emit('collision'); return;
+      }
+      // Each traffic car awards one launch. Hurdles remain lethal, even during
+      // a launch, unless the car's actual jump height clears their collider.
+      car.hit = true; car.nearMissed = true; run.trafficHits++;
+      run.y = Math.max(run.y, .12); run.vy = Math.max(run.vy, TRAFFIC_LAUNCH_SPEED);
+      run.jumpCooldown = .15; run.score = calculateScore(run); emit('ram');
+    }
     if (!car.nearMissed && car.prevZ <= 3 && car.z > 3) {
       car.nearMissed = true;
       if (Math.abs(run.x - car.x) < 3.9) { run.nearMisses++; emit('near'); }
@@ -81,7 +89,7 @@ export function simulate(run: Run, input: Commands, dt: number, emit: (event: Si
   }
   run.nextRow -= (run.speed - 18) * dt;
   if (run.nextRow <= 0) {
-    spawnRow(run, -420);
+    spawnRow(run, TRAFFIC_SPAWN_Z);
     // Use maximum boost speed for the spacing guarantee, not only current speed.
     run.nextRow += rowSpacing(84 - 18, run.distance / 14000);
   }

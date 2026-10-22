@@ -14,7 +14,7 @@ These are user-provided observations, not direct observations by the implementat
 
 ## Implemented fallback and original design
 
-- Original red Tesla-inspired winged roadster, using earlier photo-inspired procedural geometry recolored red.
+- Original white Tesla-inspired winged roadster, using earlier photo-inspired procedural geometry. The white paint, denser traffic, +200-point traffic-hit launches, and hurdle-only game-over behavior were explicitly requested in the subsequent user revision.
 - A black night sky, moon, stars, forest roadside, distant city skyline, textured four-lane highway, reflectors, barriers, streetlights, headlights, and sedan/SUV/construction traffic.
 - Automatic endless driving; responsive lane changes; ballistic jumps; complete airborne rolls; limited boost energy; gold energy pickups; gradual difficulty; swept collisions; immediate restart.
 - Original dark interface, white typography, restrained warm accents, compact HUD and panels. No reference logos, code, assets, account systems, or proprietary audio are copied.

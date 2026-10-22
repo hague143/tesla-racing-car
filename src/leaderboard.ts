@@ -32,7 +32,7 @@ export class Leaderboard {
     const ticket = await this.ticket; if (!ticket) return 'failed';
     try {
       await this.request('/scores', { ticket, name: profile.name, region: profile.region,
-        distance: run.distance, elapsed: run.elapsed, wallDuration, rolls: run.rolls, nearMisses: run.nearMisses, pickups: run.pickups });
+        distance: run.distance, elapsed: run.elapsed, wallDuration, rolls: run.rolls, nearMisses: run.nearMisses, pickups: run.pickups, trafficHits: run.trafficHits });
       return 'saved';
     } catch { return 'failed'; }
   }

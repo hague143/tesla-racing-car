@@ -19,7 +19,7 @@ function pane(parent,vertices,mat){const geo=new THREE.BufferGeometry();geo.setA
 export function createVehicle({player=false,color='#56606c',variant=0}={}) {
   const group=new THREE.Group();
   const suv=!player&&variant===1;
-  const paint=new THREE.MeshPhysicalMaterial({color,metalness:.7,roughness:.22,clearcoat:1,clearcoatRoughness:.14});
+  const paint=new THREE.MeshPhysicalMaterial({color,metalness:player?.22:.7,roughness:player?.29:.22,clearcoat:1,clearcoatRoughness:.14});
   const glass=new THREE.MeshPhysicalMaterial({color:'#101a25',metalness:.55,roughness:.08,clearcoat:1,side:THREE.DoubleSide});
   const rubber=new THREE.MeshStandardMaterial({color:'#0c0e11',roughness:.94});
   const metal=new THREE.MeshStandardMaterial({color:'#a5adba',metalness:.9,roughness:.25});

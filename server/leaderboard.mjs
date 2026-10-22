@@ -13,15 +13,15 @@ export function validateRun(data, age) {
   for (const key of ['distance', 'elapsed', 'wallDuration', 'rolls', 'nearMisses', 'pickups']) {
     if (!Number.isFinite(data[key]) || data[key] < 0) throw Error('Invalid run statistics');
   }
-  const { elapsed, distance, wallDuration, rolls, nearMisses, pickups } = data;
+  const { elapsed, distance, wallDuration, rolls, nearMisses, pickups, trafficHits = 0 } = data;
   // These checks reject impossible submissions, not all client-side cheating.
   if (elapsed < 1 || elapsed > 21600 || elapsed > age + 3 || wallDuration > age + 5 || elapsed > wallDuration + 2 || distance > 84 * elapsed + 3 || distance < 20 * elapsed - 10) throw Error('Implausible run timing or distance');
-  if (![rolls, nearMisses, pickups].every(Number.isInteger) || rolls > elapsed * 2 || nearMisses > distance / 65 + 6 || pickups > distance / 100 + 3) throw Error('Implausible bonuses');
+  if (![rolls, nearMisses, pickups, trafficHits].every(Number.isInteger) || trafficHits < 0 || rolls > elapsed * 2 || nearMisses + trafficHits > distance / 40 + 12 || pickups > distance / 100 + 3) throw Error('Implausible bonuses');
   if (typeof data.region !== 'string' || !REGIONS.includes(data.region)) throw Error('Invalid region');
   const name = typeof data.name === 'string' ? data.name.replace(/[^\p{L}\p{N} _-]/gu, '').trim().slice(0, 20) : '';
   if (!name) throw Error('Choose a valid pilot name');
   return { name, region: data.region, distance: Math.round(distance * 100) / 100,
-    score: Math.floor(distance * (1 + Math.min(elapsed / 600, .5)) + rolls * 250 + nearMisses * 100 + pickups * 75), at: Date.now() };
+    score: Math.floor(distance * (1 + Math.min(elapsed / 600, .5)) + rolls * 250 + nearMisses * 100 + pickups * 75 + trafficHits * 200), at: Date.now() };
 }
 function top(entries, period, metric, region) {
   const weekly = weekStart();
