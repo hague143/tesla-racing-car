@@ -1,76 +1,115 @@
-# Tesla Night Flight
+# Tesla Night Shift
 
-A nighttime endless-driving game with a graphite jetpack roadster inspired by the uploaded rear-view car photo. The 3D model recreates its large rear wing, continuous red taillight and four lift nozzles. It is a procedural recreation, not an extracted or exact 3D model of the photograph. The original image appears in the garage preview.
+An original, playable night-highway arcade game built with **TypeScript, Vite, and Three.js**. Drive a detailed red Tesla-inspired roadster through traffic, jump over obstacles, perform airborne rolls, collect energy cells, and boost toward a personal record. This is an independent fan game with original procedural assets, not an official Tesla product.
 
-The scene includes a black night sky, moon and stars, textured asphalt, detailed tree silhouettes, streetlights, headlights, and reflective sedan/SUV traffic. Trees use detailed crossed foliage cutouts with three-dimensional trunks; the scene does not require remote model or texture downloads. No affiliation with Tesla.
+The live Roadster Dash website could not be accessed from this environment. The implementation follows the user-supplied interface and fallback gameplay brief. See [REFERENCE.md](REFERENCE.md) for the exact evidence boundary.
 
-## Play
+## Run locally
 
-Serve this directory with Python 3:
+Requires **Node.js 22.12+** and npm.
 
 ```sh
-python3 -m http.server 8001 --bind 0.0.0.0
+npm ci
+npm run dev
 ```
 
-Open the served page in a WebGL 2-capable browser. The prebuilt `game.js` contains Three.js, so playing needs no dependency installation. A standalone HTML export includes the source photo and all styles and scripts for offline play.
+Open the local address printed by Vite (port 8001). For a production preview:
 
-Click **Start Driving**, then use:
+```sh
+npm test
+npm run build
+npm run preview
+```
+
+`npm run build` type-checks the source and creates the complete deployable static site in **public/**, including the third-party license. Vercel is already configured to publish this directory; no Python server, backend, or environment variables are required for offline-record gameplay. Deploy the latest `main` commit, rather than retrying an older deployment that predates these changes.
+
+## How to play
+
+Forward movement is automatic. Each press changes one lane; holding a direction crosses additional lanes. A first-run panel explains the controls before play starts.
 
 | Control | Action |
 | --- | --- |
-| W / Up | Accelerate |
-| A / D or Left / Right | Steer |
-| S / Down | Brake; keep holding to reverse |
-| Space + accelerator | Power boost |
-| B / Horn button | Hold to sound the horn; tap for a short honk |
-| M / Sound button | Mute / unmute |
-| G / Vapor Jets button | Toggle white vapor exhaust |
-| F / Flight Mode button | Take off / land |
-| R | Return to the road and disable jets and flight |
-| C / camera button | Chase / hood camera |
-| P / Escape / pause button | Pause / resume |
-| H / assist button | Toggle steering assist |
-| Headlights button | Switch player headlights on / off |
+| A / D or Left / Right | Change lanes |
+| Space | Play from menu; jump during a run |
+| Shift (hold) | Boost |
+| Q / E | Left / right barrel roll while airborne |
+| S / Down | Brake |
+| B (hold) | Horn |
+| Escape / P | Pause / resume |
+| M | Mute / unmute |
+| R | Restart after a crash |
 
-Flight automatically activates the four jets and smoothly lifts the car about 2.5 meters above the road. Steering, acceleration, braking and cameras remain available while flying. You can pass over traffic at full flight altitude. F lands while leaving vapor enabled; G can turn the vapor off and also lands a flying car. Scenery obstacles still obstruct the car when tall enough to reach it. There is no finish line.
+Mobile has two steering pads, Jump, Roll, and a hold-to-Boost button. Pointer capture handles releases outside buttons and interruptions. Page scrolling is disabled during play. No swipe gestures are needed.
 
-The onscreen jets and flight buttons work on phones, alongside touch steering, throttle, brake and boost. Best trip distance is saved locally when pausing, starting another drive, or leaving the page. Losing focus pauses automatically.
+Rolls earn 250 points, close passes 100, and gold energy cells 75 plus 30 energy. Distance contributes to score with a gradual survival multiplier. Boost consumes limited energy, locks until 25% after depletion, and recharges automatically. Collisions end the run; restarting resets the simulation and pools without reloading the page. Pause, focus loss, and hidden tabs freeze the simulation and silence driving audio.
 
-## Sound
+## Settings and saved data
 
-Click **Start Driving** to enable sound. Electric motor pitch and road/wind noise follow speed and acceleration. Braking and hard cornering produce tire sounds on the ground. Vapor jets hiss, flight adds a turbine hum, and boosting adds a whoosh. The game also includes a dual-tone horn, reverse beeps, stereo traffic pass-bys, impacts, landing sounds, and startup/control chimes.
+Settings include graphics quality, effects volume, mute, reduced motion, and camera shake. Reduced motion disables camera shake, banking, bob, and boost field-of-view changes. English and Spanish are implemented; the selector changes menus, controls, settings, ranking messages, and results.
 
-Hold **B** or the horn button for a sustained horn. **M** or the header Sound button mutes/unmutes. Open the pause menu to adjust **Volume**. Volume and mute settings are saved in the browser. Pausing or leaving the game silences all sound and releases the horn.
+Pilot name, voluntarily selected region, settings, score records, and distance records use local storage. Storage failures do not prevent play; the results screen explains when saving is unavailable. No analytics, remote fonts, location requests, music downloads, or proprietary reference assets are used.
 
-All audio is synthesized locally with Web Audio, so no audio downloads or external services are needed. Sound is also included in the standalone HTML export.
+All audio is generated with Web Audio after a play/resume gesture: speed-responsive motor, road/wind, brake/skid, horn, jet vapor/turbine, boost, jump, landing, pickup, roll, close-pass, start, and impact sounds. Muting and pausing silence the mix. There is no music, so one effects-volume control is provided.
 
-## Development
+## Optional online rankings
 
-Requires Node.js 18+ and npm. Dependency versions are pinned in `package-lock.json`.
+Without a backend, the ranking panel explicitly displays **“Online rankings unavailable.”** No demo users are presented as live players. Personal records and the whole game remain available.
 
-```sh
-npm ci --no-audit --no-fund
-npm test
-npm run build
-npm run export:html
+A separate adapter in `src/leaderboard.ts` supports top 100, all-time/weekly, global/regional, and score/distance filters. Set the public service URL in `.env.local` using [.env.example](.env.example), then rebuild:
+
+```dotenv
+VITE_LEADERBOARD_URL=https://your-ranking-service.example
 ```
 
-- `src/game.js`: world, interface, lighting, collisions and cameras
-- `src/physics.js`: driving and spring-based takeoff/landing
-- `src/vehicles.js`: roadster, wing, jets and detailed traffic cars
-- `src/textures.js`: generated asphalt, foliage, moon, reflection and smoke textures
-- `src/effects.js`: pooled vapor particles
-- `src/audio.js`: real-time vehicle synthesis, effects, volume and mute
-- `scripts/export-html.mjs`: standalone HTML, defaulting to `/workspace/library-files/tesla-night-flight.html`; accepts an output path argument
+An optional reference service is included in [server/leaderboard.mjs](server/leaderboard.mjs). Run it on a persistent Node host, separately from the static Vercel frontend:
 
-`npm run build` regenerates the prebuilt `game.js`. Export again after source, style, or markup changes. Tests cover driving, reverse, steering, boost, recovery, safe frame steps, hover/landing, sound reactions, traffic panning, and audio settings. Add `?debug=1` to expose deterministic stepping, particle counts and renderer diagnostics through `window.__drive`.
+```sh
+ALLOWED_ORIGIN=https://your-game.example LEADERBOARD_SECRET=your-server-only-secret npm run leaderboard
+```
 
-## Deploy to Vercel
+It defaults to port 8787 and `.leaderboard/scores.json` for storage. Configure the exact allowed frontend origin. Never put a secret in a `VITE_` variable. Terminate HTTPS at the host/proxy. The service issues signed one-use run tickets, validates plausible timing/distance/bonuses, computes scores server-side, sanitizes names, rate-limits reads and submissions, limits bodies, and writes records atomically. Weekly rankings reset **Monday at 00:00 UTC**. Only records that can affect the current top 100 in each supported dimension are retained.
 
-Import this repository with its root directory set to the repository root (`.`). The committed `vercel.json` configures a static site: it installs with `npm ci`, builds with `npm run build`, and publishes `public/`, matching Vercel's default static output folder. No Python server or environment variables are needed on Vercel.
+This is a small **single-process, persistent-disk** example. It has no account authentication; pilot names are display identities. Client-reported statistics can still be forged within plausibility bounds. Competitive production rankings need authenticated identities, shared durable storage/rate limits for multiple instances, server-authoritative run verification, and operational monitoring. Do not deploy the example as a stateless filesystem-only serverless function.
 
-The build creates `public/index.html`, `public/style.css`, `public/game.js`, and the car image under `public/assets/`, together with the third-party license. It also retains the root `game.js` for local play and standalone exports. Generated `public/` files do not need to be committed.
+Optional backend failures time out after 6.5 seconds and never block game loading or play. Submission status is shown on the results screen. The frontend has no required remote assets, so there are no asset-download waits to stall loading.
 
-To deploy an updated fix, create a deployment from the latest `main` branch or its new commit SHA. Check the cloning line in the build log to confirm that SHA. Redeploying an existing deployment can rebuild its original commit, even when the build cache is disabled. The original `f7ee3ee` commit predates the deployment configuration and cannot produce the required output folder.
+## Project structure
 
-Three.js is MIT licensed; see `THIRD_PARTY_LICENSES.txt`. The reference photo was supplied by the user. All scenery textures and vehicle geometry are generated in the game.
+| File | Responsibility |
+| --- | --- |
+| `src/main.ts` | Fixed-step loop and game orchestration |
+| `src/state.ts` | Explicit BOOT / LOADING / MENU / PLAYING / PAUSED / GAME_OVER / ERROR transitions |
+| `src/simulation.ts` | Frame-independent driving, jumping, rolls, boost, scoring |
+| `src/traffic.ts` | Seeded pooled rows and a connected safe corridor |
+| `src/collisions.ts` | Continuous swept 3D collision volumes |
+| `src/input.ts` | Keyboard and mobile pointer controls |
+| `src/world.ts` | Renderer, vehicle pools, camera, shadows and skyline |
+| `src/road.ts` | Recycled highway segments and instanced trees/markings |
+| `src/effects.ts` | Fixed-size particle pool |
+| `src/ui.ts`, `src/i18n.ts` | Accessible menus, HUD, panels and translations |
+| `src/storage.ts` | Defensive local persistence |
+| `src/leaderboard.ts` | Optional backend adapter |
+| `src/audio.js` | Original synthesized vehicle audio |
+| `src/vehicles.js`, `src/textures.js` | Original procedural geometry/textures |
+| `src/config.ts` | Game name, logo, attribution, support/contact links and public service URL |
+
+The simulation uses 120 Hz fixed steps and a bounded frame accumulator. AABB sweeps include changing jump height to prevent high-speed tunneling. Cosmetic roll rotation is independent of the collision shape. Equal-speed traffic rows preserve their spacing; adjacent reserved escape lanes have at least 2.25 seconds between rows at maximum relative boost speed. Density and cruise speed increase gradually within limits.
+
+The renderer caps pixel ratio, offers low-quality mode without shadows, uses instancing, and recycles road/traffic/pickup/particle pools. Resize and orientation changes preserve a run. The graphics context is checked early; failures and context loss offer an explicit Retry action that rebuilds resources on a fresh canvas. Menus have keyboard focus handling and modal focus containment.
+
+## Standalone export
+
+```sh
+npm run build
+npm run export:html -- /path/to/tesla-night-shift.html
+```
+
+The exporter inlines the Vite script, CSS, and license into one HTML file for offline play. No CDN is required. The default export path in the cloud workspace is `/workspace/library-files/tesla-night-shift.html`. Online rankings still require a configured network service.
+
+## Verification
+
+`npm test` runs simulation, collision, fair-generation, state-transition, persistence, audio-mix, standalone-export, and actual optional-backend HTTP tests. Build performs strict TypeScript checking. Browser verification results and limitations are recorded in [VERIFICATION.md](VERIFICATION.md).
+
+Add `?debug=1` to expose `window.__nightshift` for deterministic simulation stepping, audio meter readings, and renderer diagnostics. `?noWebGL` deliberately exercises the graphics-error screen. Both are opt-in diagnostic query parameters; no debug controls are shown in normal play.
+
+Three.js is MIT licensed; see [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt). All game geometry, textures, effects, and synthesized sounds are generated locally. `assets/reference-car.avif` is the earlier user-supplied photo and is retained as source reference; the new game does not need to download it.

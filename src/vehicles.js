@@ -19,7 +19,7 @@ function pane(parent,vertices,mat){const geo=new THREE.BufferGeometry();geo.setA
 export function createVehicle({player=false,color='#56606c',variant=0}={}) {
   const group=new THREE.Group();
   const suv=!player&&variant===1;
-  const paint=new THREE.MeshPhysicalMaterial({color:player?'#4a505a':color,metalness:.7,roughness:.22,clearcoat:1,clearcoatRoughness:.14});
+  const paint=new THREE.MeshPhysicalMaterial({color,metalness:.7,roughness:.22,clearcoat:1,clearcoatRoughness:.14});
   const glass=new THREE.MeshPhysicalMaterial({color:'#101a25',metalness:.55,roughness:.08,clearcoat:1,side:THREE.DoubleSide});
   const rubber=new THREE.MeshStandardMaterial({color:'#0c0e11',roughness:.94});
   const metal=new THREE.MeshStandardMaterial({color:'#a5adba',metalness:.9,roughness:.25});
@@ -83,6 +83,33 @@ export function createVehicle({player=false,color='#56606c',variant=0}={}) {
     }
   }
   group.userData={wheels,taillight,nozzles,jetBeams};
+  if(player) {
+    // Batch static body parts and each wheel's three materials independently.
+    // Wheels, light targets, and jet beams retain their animation transforms.
+    const mergeParts=(parent,parts,world=false)=>{
+      const buckets=new Map();
+      for(const object of parts){
+        object.updateMatrix();
+        const geo=object.geometry.index?object.geometry.toNonIndexed():object.geometry.clone();
+        geo.deleteAttribute('uv');geo.applyMatrix4(world?object.matrixWorld:object.matrix);
+        if(!buckets.has(object.material))buckets.set(object.material,[]);
+        buckets.get(object.material).push(geo);object.removeFromParent();object.geometry.dispose();
+      }
+      for(const[material,geometries]of buckets){
+        const merged=add(parent,mergeGeometries(geometries),material);merged.castShadow=material!==glass&&material!==headlights&&material!==taillight;
+        geometries.forEach(geometry=>geometry.dispose());
+      }
+    };
+    const animated=new Set(jetBeams);
+    for(const wheel of wheels){
+      const spin=wheel.userData.spin;
+      mergeParts(spin,[...spin.children]);
+      wheel.traverse(object=>animated.add(object));
+    }
+    group.updateMatrixWorld(true);
+    const body=[];group.traverse(object=>{if(object.isMesh&&!animated.has(object))body.push(object);});
+    mergeParts(group,body,true);
+  }
   if(!player) {
     group.updateMatrixWorld(true);const buckets=new Map();
     group.traverse(object=>{if(!object.isMesh)return;const geo=object.geometry.index?object.geometry.toNonIndexed():object.geometry.clone();geo.deleteAttribute('uv');geo.applyMatrix4(object.matrixWorld);if(!buckets.has(object.material))buckets.set(object.material,[]);buckets.get(object.material).push(geo);});

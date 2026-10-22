@@ -10,6 +10,7 @@ export function drivingSoundMix(drive, input = {}, traffic = []) {
     clamp((Math.abs(drive.steering || 0) - .5) * 2) * clamp((speed - 18) / 30));
   let nearest = null, nearestDistance = 55;
   for (const car of traffic) {
+    if (car.active === false) continue;
     const x = car.model?.position.x ?? car.x;
     const distance = Math.hypot(x - drive.x, car.z - drive.z, drive.altitude || 0);
     if (distance < nearestDistance) { nearestDistance = distance; nearest = { ...car, x }; }
@@ -127,6 +128,7 @@ export function createSoundGraph(context) {
     const impact = kind === 'impact' || kind === 'landing';
     const settings = {
       start: [392, 523.25, .32], boost: [430, 900, .2], lift: [260, 540, .4],
+      jump: [260, 610, .24], roll: [520, 1040, .23], pickup: [660, 1320, .18], near: [440, 880, .12], menu: [420, 560, .08],
       land: [480, 250, .28], reset: [330, 440, .22], impact: [70, 34, .38], landing: [60, 38, .24],
     }[kind];
     if (!settings) return;
@@ -156,10 +158,10 @@ export function createSoundGraph(context) {
     apply(mix) {
       for (const name of Object.keys(channels)) if(name!=='horn')ramp(channels[name].gain, mix[name] || 0);
       setHorn(!!mix.horn);
-      ramp(oscillators.motor.frequency, mix.motorPitch); ramp(oscillators.harmonic.frequency, mix.motorPitch * 2.4);
-      ramp(oscillators.skid.frequency, mix.skidPitch); ramp(oscillators.turbine.frequency, mix.turbinePitch);
-      ramp(filters.wind.frequency, mix.windPitch); ramp(filters.traffic.frequency, mix.trafficPitch);
-      ramp(pan.pan, mix.trafficPan);
+      ramp(oscillators.motor.frequency, mix.motorPitch || 65); ramp(oscillators.harmonic.frequency, (mix.motorPitch || 65) * 2.4);
+      ramp(oscillators.skid.frequency, mix.skidPitch || 700); ramp(oscillators.turbine.frequency, mix.turbinePitch || 110);
+      ramp(filters.wind.frequency, mix.windPitch || 1200); ramp(filters.traffic.frequency, mix.trafficPitch || 800);
+      ramp(pan.pan, mix.trafficPan || 0);
     },
     cue,
     stop() { for (const source of [...sources, ...voices]) { try { source.stop(); } catch {} source.disconnect(); } master.disconnect(); },
@@ -168,7 +170,7 @@ export function createSoundGraph(context) {
 
 export function createCarAudio(onChange = () => {}) {
   let context = null, graph = null, playing = false, muted = false, volume = .55, available = true, lastMix = null;
-  let wasBoosting = false, previousAltitude = 0;
+  let wasBoosting = false, previousAltitude = 0, endingTimer = null;
   try {
     muted = localStorage.getItem('teslaAudioMuted') === 'true';
     const stored = localStorage.getItem('teslaAudioVolume');
@@ -190,6 +192,7 @@ export function createCarAudio(onChange = () => {}) {
       } catch { available = false; onChange(); return false; }
     },
     setPlaying(value) {
+      if (endingTimer) { clearTimeout(endingTimer); endingTimer = null; }
       playing = value; if (!value && graph) graph.setHorn(false,true); applyVolume();
       if (!value) { wasBoosting = false; previousAltitude = 0; }
     },
@@ -197,6 +200,21 @@ export function createCarAudio(onChange = () => {}) {
     setVolume(value) { if (Number.isFinite(value)) volume = clamp(value); save(); applyVolume(); onChange(); },
     setHorn(active) { if (graph) graph.setHorn(playing && active); },
     cue(kind, strength) { if (graph && playing && !muted) graph.cue(kind, strength); },
+    ending() {
+      if (!graph || muted || playing) return;
+      const silent = Object.fromEntries(Object.keys(graph.channels).map(name => [name, 0]));
+      graph.apply({...lastMix, ...silent}); graph.setHorn(false, true);
+      graph.setMaster(volume * .8); graph.cue('impact');
+      endingTimer = setTimeout(() => { endingTimer = null; applyVolume(); }, 420);
+    },
+    menu() {
+      if (!graph || muted) return;
+      if (playing) return graph.cue('menu');
+      if (endingTimer) clearTimeout(endingTimer);
+      const silent = Object.fromEntries(Object.keys(graph.channels).map(name => [name, 0]));
+      graph.apply({...lastMix, ...silent}); graph.setHorn(false, true); graph.setMaster(volume * .8); graph.cue('menu');
+      endingTimer = setTimeout(() => { endingTimer = null; applyVolume(); }, 180);
+    },
     update(drive, input, traffic) {
       if (!graph || !playing) return;
       lastMix = drivingSoundMix(drive, input, traffic); graph.apply(lastMix);
@@ -213,6 +231,6 @@ export function createCarAudio(onChange = () => {}) {
       return { initialized: !!context, available, contextState: context?.state || 'uninitialized', playing, muted, volume, rms, peak,
         mix: lastMix, masterGain:graph?.master.gain.value||0, levels:graph?Object.fromEntries(Object.entries(graph.channels).map(([name,node])=>[name,node.gain.value])):{}, motorFrequency: graph?.oscillators.motor.frequency.value || 0, voices: graph?.activeVoices || 0 };
     },
-    dispose() { if (graph) graph.stop(); if (context) void context.close(); graph = null; context = null; },
+    dispose() { if (endingTimer) clearTimeout(endingTimer); if (graph) graph.stop(); if (context) void context.close(); graph = null; context = null; },
   };
 }

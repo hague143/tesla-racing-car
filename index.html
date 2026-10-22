@@ -1,60 +1,107 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <link rel="icon" href="data:,"><meta name="theme-color" content="#020409"><title>Tesla — Night Flight</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#07080b">
+  <meta name="description" content="Own the night in an original Tesla-inspired arcade driving game. Jump, roll, and boost through a midnight highway.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23090a0e'/%3E%3Cpath d='M18 46 31 17h15L33 46Z' fill='%23ff613c'/%3E%3C/svg%3E">
+  <title>Tesla Night Shift — Own the night</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
-<body>
-  <main id="game">
-    <canvas id="world" aria-label="A 3D endless driving game with a graphite Tesla-inspired jetpack roadster, a winding road, realistic tree silhouettes, a starry night sky, streetlights and traffic."></canvas>
-    <div class="vignette"></div>
-    <header>
-      <div class="brand"><span class="wordmark">TESLA</span><span class="brand-divider"></span><span class="brand-sub">NIGHT FLIGHT</span></div>
-      <nav aria-label="Game settings">
-        <button id="sound" class="setting" aria-label="Mute sound (M)" aria-pressed="true"><svg viewBox="0 0 20 20"><path d="M3 7h4l4-4v14l-4-4H3Z M14 6q5 4 0 8"/><path id="mute-mark" d="m2 2 16 16" hidden/></svg><span id="sound-label">SOUND ON</span></button>
-        <button id="lighting" class="setting" aria-label="Toggle headlights" aria-pressed="true"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="3"/><path d="M10 1v2m0 14v2M1 10h2m14 0h2M4 4l1.5 1.5m9 9L16 16M4 16l1.5-1.5m9-9L16 4"/></svg><span id="lighting-label">HEADLIGHTS ON</span></button>
-        <button id="camera" class="setting"><svg viewBox="0 0 20 20"><path d="M2 6h4l2-3h4l2 3h4v11H2Z"/><circle cx="10" cy="11" r="3"/></svg><span id="camera-label">CHASE CAM</span></button>
-        <button id="pause" class="setting icon-only" aria-label="Pause game" disabled><svg viewBox="0 0 20 20"><path d="M7 4v12m6-12v12"/></svg></button>
-      </nav>
-    </header>
-    <div class="trip" id="trip"><span class="live-dot"></span><span>FREE DRIVE</span><span class="trip-separator">/</span><strong id="distance">0.00</strong><span>KM</span></div>
-    <div class="jet-controls" aria-label="Jetpack controls">
-      <button id="vapor" aria-label="Toggle vapor jets" aria-pressed="false" disabled><kbd>G</kbd><span>VAPOR JETS<strong id="vapor-label">OFF</strong></span><i></i></button>
-      <button id="flight" aria-label="Fly or land" aria-pressed="false" disabled><kbd>F</kbd><span>FLIGHT MODE<strong id="flight-label">GROUNDED</strong></span><i></i></button>
-      <button id="horn" class="horn-button" aria-label="Sound horn, hold B" aria-pressed="false" title="Hold for horn (B)" disabled><kbd>B</kbd><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h5l7-5v14l-7-5H4Z M19 8q5 4 0 8"/></svg><span>HORN</span></button>
-      <div class="altitude"><strong id="altitude">0.0</strong><span>M / ALTITUDE</span></div>
+<body data-state="BOOT">
+<svg class="svg-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-sound" viewBox="0 0 24 24"><path d="M3 9h4l5-5v16l-5-5H3ZM16 8q4 4 0 8m3-11q7 7 0 14"/></symbol>
+  <symbol id="i-muted" viewBox="0 0 24 24"><path d="M3 9h4l5-5v16l-5-5H3Zm13 0 6 6m0-6-6 6"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 3h10v7a5 5 0 0 1-10 0Zm0 2H3v3q0 4 4 4m10-7h4v3q0 4-4 4m-5 3v5m-4 1h8"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="m9 3-.5 3-3 1-2.5 2 2 3-1 3 3 2 1 3 4-1 3 1 1-3 3-2-1-3 2-3-2.5-2-3-1-.5-3Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-controls" viewBox="0 0 24 24"><path d="M7 7h10q3 0 4 4l1 6q0 4-4 2l-3-3H9l-3 3q-4 2-4-2l1-6q1-4 4-4Zm-1 3v5m-2.5-2.5h5M16 11h.1M19 14h.1"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="m14 2-9 12h6l-1 8 9-12h-6Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+</defs></svg>
+<main id="app">
+  <canvas id="world" aria-label="Interactive 3D night highway with a red Tesla-inspired sports car"></canvas>
+  <div class="scene-shade" aria-hidden="true"></div>
+  <header class="topbar" id="topbar" hidden>
+    <a class="brand" href="#" id="brand-home" aria-label="Night Shift main menu"><i class="brand-mark" aria-hidden="true"></i><span>NIGHT<span class="brand-light">SHIFT</span><small>AFTER HOURS. ALL IN.</small></span></a>
+    <div class="header-actions">
+      <button class="pilot-pill" id="edit-pilot"><span class="avatar">N</span><span><small data-t="pilot">PILOT</small><b id="pilot-name">Night pilot</b></span><span class="edit-pencil" aria-hidden="true">↗</span></button>
+      <button class="icon-button sound-toggle" id="sound-button" aria-label="Sound (M)" aria-pressed="true"><svg><use href="#i-sound"/></svg><kbd>M</kbd></button>
+      <button class="icon-button" id="pause-button" aria-label="Pause" hidden><svg><use href="#i-pause"/></svg></button>
     </div>
-    <aside id="garage" class="garage"><img src="assets/reference-car.avif" alt="Your reference car with a rear wing, red light bar, and four vapor jets"><div><span>YOUR REFERENCE / RECREATED IN 3D</span><strong>Roadster. Jetpack equipped.</strong></div></aside>
-    <section id="menu" class="menu">
-      <p class="eyebrow"><span></span> AFTER DARK. ABOVE IT ALL.</p>
-      <h1>Own the<br><em>dark.</em></h1>
-      <p class="intro">A graphite roadster. Four vapor jets.<br>Drive the night. Rise above the road.</p>
-      <button id="start" class="primary">START DRIVING <svg viewBox="0 0 20 20"><path d="M4 16 16 4M4 4h12v12"/></svg></button>
-      <p class="menu-help"><kbd>W A S D</kbd> TO DRIVE <span>·</span> <kbd>F</kbd> FLY <span>·</span> <kbd>G</kbd> VAPOR JETS</p>
+  </header>
+  <section class="loading-screen" id="loading-screen" aria-live="polite">
+    <i class="brand-mark"></i><p data-t="loading">PREPARING THE NIGHT</p>
+    <div class="load-track" role="progressbar" aria-label="Loading" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="load-progress"><div id="load-fill"></div></div>
+    <small id="load-detail">Checking graphics</small>
+  </section>
+  <section class="main-menu" id="main-menu" hidden aria-label="Main menu">
+    <div class="eyebrow"><span class="status-dot"></span><span data-t="tagline">THE CITY SLEEPS. YOU DON’T.</span></div>
+    <h1><span id="title-first">TESLA</span><span id="title-second">NIGHT SHIFT</span><i class="title-period">.</i></h1>
+    <p class="menu-intro" data-t="intro">Own the night. Find your line.</p>
+    <p class="menu-description" data-t="description">Dodge traffic, take flight, and push past your best.</p>
+    <div class="records">
+      <div><span data-t="best">ALL-TIME BEST</span><strong id="menu-best">0</strong><small data-t="score">SCORE</small></div>
+      <div><span data-t="distance">DISTANCE</span><strong id="menu-distance">0.00<small> KM</small></strong><small data-t="personalRecord">PERSONAL RECORD</small></div>
+    </div>
+    <button class="primary play-button" id="play-button"><span data-t="play">PLAY</span><span class="play-shortcut"><kbd>SPACE</kbd><svg><use href="#i-arrow"/></svg></span></button>
+    <nav class="menu-links" aria-label="Game panels">
+      <button data-panel="ranking"><svg><use href="#i-trophy"/></svg><span data-t="rankings">Rankings</span></button>
+      <button data-panel="settings"><svg><use href="#i-settings"/></svg><span data-t="settings">Settings</span></button>
+      <button data-panel="controls"><svg><use href="#i-controls"/></svg><span data-t="controls">Controls</span></button>
+    </nav>
+  </section>
+  <div class="scene-caption" id="scene-caption" hidden><span>01 <i></i> <span data-t="night">NIGHT HIGHWAY</span></span><strong>REDLINE ROADSTER</strong><small data-t="original">ORIGINAL ARCADE DRIVING</small></div>
+  <footer id="footer" hidden>
+    <p data-t="independent">Independent fan game. Not affiliated with Tesla, Inc.</p>
+    <nav><button data-panel="privacy" data-t="privacy">Privacy</button><button data-panel="terms" data-t="terms">Terms</button><button data-panel="about" data-t="about">About</button><a id="support-link" hidden data-t="support">Support</a><label class="language-label"><span aria-hidden="true">◎</span><select id="language" aria-label="Language"><option value="en">EN</option><option value="es">ES</option></select></label></nav>
+  </footer>
+  <section class="hud" id="hud" hidden aria-label="Run statistics">
+    <div class="run-score"><span data-t="score">SCORE</span><strong id="score-value">0</strong><small><b id="distance-value">0.00</b> KM</small></div>
+    <div class="boost-hud"><div class="boost-heading"><svg><use href="#i-bolt"/></svg><span data-t="item">ITEM / BOOST</span><strong id="energy-value">100%</strong></div><div class="energy-track" role="progressbar" aria-label="Boost energy" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100" id="energy-meter"><i id="energy-fill"></i></div><small id="boost-state">HOLD SHIFT</small></div>
+    <div class="speed-hud"><strong id="speed-value">0</strong><span data-t="speed">KM/H</span></div>
+    <div class="desktop-hint"><span><kbd>A</kbd><kbd>D</kbd> <span data-t="steer">Change lanes</span></span><span><kbd>SPACE</kbd> <span data-t="jump">Jump</span></span><span><kbd>Q</kbd><kbd>E</kbd> <span data-t="roll">Roll while airborne</span></span></div>
+    <div class="run-notice" id="notice" role="status" aria-live="polite"></div>
+    <div class="touch-controls" id="touch-controls" aria-label="Driving controls">
+      <div class="steer-buttons"><button data-control="left" aria-label="Move left">‹</button><button data-control="right" aria-label="Move right">›</button></div>
+      <div class="action-buttons"><div><button data-control="roll" data-t="rollButton" aria-label="Barrel roll">ROLL</button><button data-control="jump" data-t="jump">Jump</button></div><button data-control="boost" class="touch-boost" aria-label="Hold boost"><svg><use href="#i-bolt"/></svg><span data-t="boostButton">BOOST</span></button></div>
+    </div>
+  </section>
+  <div class="overlay" id="pause-overlay" hidden>
+    <section class="card state-card" role="dialog" aria-modal="true" aria-labelledby="pause-title"><div class="eyebrow" data-t="pause">Pause</div><h2 id="pause-title" data-t="paused">TAKE A BREATHER.</h2><p data-t="pauseText">Your run is right where you left it.</p><button class="primary" id="resume-button" data-t="resume">RESUME</button><button class="secondary" data-panel="settings" data-t="settings">Settings</button><button class="text-button" id="pause-menu-button" data-t="menu">MAIN MENU</button></section>
+  </div>
+  <div class="overlay" id="over-overlay" hidden>
+    <section class="card state-card gameover-card" role="dialog" aria-modal="true" aria-labelledby="over-title"><div class="eyebrow" id="record-label" data-t="over">END OF THE ROAD.</div><h2 id="over-title" data-t="over">END OF THE ROAD.</h2><p data-t="collision">Traffic caught up. The next run is yours.</p><div class="result-grid"><div><span data-t="finalScore">FINAL SCORE</span><strong id="final-score">0</strong></div><div><span data-t="finalDistance">DISTANCE DRIVEN</span><strong><b id="final-distance">0.00</b><small> KM</small></strong></div></div><div class="best-line"><span data-t="bestComparison">PERSONAL BEST</span><b id="final-best">0</b></div><p class="local-status" id="local-status"></p><p class="submission-status" id="submission-status" aria-live="polite"></p><button class="primary" id="again-button"><span data-t="again">PLAY AGAIN</span><kbd>R</kbd></button><button class="text-button" id="over-menu-button" data-t="menu">MAIN MENU</button></section>
+  </div>
+  <div class="overlay modal-overlay" id="panel-overlay" hidden>
+    <section class="card panel-card" role="dialog" aria-modal="true" aria-labelledby="panel-title" tabindex="-1">
+      <div class="panel-header"><div><span class="eyebrow">NIGHT SHIFT</span><h2 id="panel-title">Settings</h2></div><button id="close-panel" class="icon-button" aria-label="Close"><svg><use href="#i-close"/></svg></button></div>
+      <div id="ranking-panel" hidden>
+        <div class="segmented" id="period-filter"><button class="selected" data-value="all" aria-pressed="true" data-t="allTime">ALL-TIME</button><button data-value="weekly" aria-pressed="false" data-t="weekly">WEEKLY</button></div>
+        <div class="filter-row"><div class="filter-pair" id="region-filter"><button class="selected" data-value="GLOBAL" aria-pressed="true" data-t="global">GLOBAL</button><button data-value="regional" aria-pressed="false" data-t="regional">MY REGION</button></div><div class="filter-pair" id="metric-filter"><button class="selected" data-value="score" aria-pressed="true" data-t="score">SCORE</button><button data-value="distance" aria-pressed="false" data-t="distance">DISTANCE</button></div></div>
+        <div class="ranking-content" id="ranking-content" aria-live="polite"></div><small class="panel-note" data-t="weeklyNote">Weekly rankings reset Monday at 00:00 UTC.</small>
+      </div>
+      <div id="settings-panel" hidden>
+        <label class="setting-row"><span data-t="graphics">Graphics quality</span><select id="quality"><option value="low" data-t="qualityLow">Low · performance</option><option value="medium" data-t="qualityMedium">Medium · balanced</option><option value="high" data-t="qualityHigh">High · detail</option></select></label>
+        <label class="setting-row volume-row"><span data-t="volume">Effects volume</span><span><input id="volume" type="range" min="0" max="100" aria-label="Effects volume"><output id="volume-value">55%</output></span></label>
+        <label class="setting-row"><span data-t="muted">Mute sound</span><input class="switch" id="mute-setting" type="checkbox"></label>
+        <label class="setting-row"><span data-t="reduced">Reduced motion</span><input class="switch" id="reduced-motion" type="checkbox"></label>
+        <label class="setting-row"><span data-t="shake">Camera shake</span><input class="switch" id="camera-shake" type="checkbox"></label>
+        <button class="secondary full-width" data-panel="controls" data-t="controls">Controls</button><p class="panel-note" data-t="settingsHint">Settings are saved automatically on this device.</p>
+      </div>
+      <div id="controls-panel" hidden>
+        <h3 data-t="how">FIND YOUR FLOW.</h3><p data-t="controlsIntro">Forward motion is automatic. Pick your lane. Time your jump.</p>
+        <div class="control-grid"><span data-t="steer">Change lanes</span><span><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd></span><span data-t="jump">Jump</span><kbd>SPACE</kbd><span data-t="boost">Hold to boost</span><kbd>SHIFT</kbd><span data-t="roll">Roll while airborne</span><span><kbd>Q</kbd><kbd>E</kbd></span><span data-t="brake">Brake</span><span><kbd>S</kbd> / <kbd>↓</kbd></span><span data-t="horn">Horn</span><kbd>B</kbd><span data-t="pauseControl">Pause / resume</span><kbd>ESC</kbd><span data-t="mute">Mute</span><kbd>M</kbd></div>
+        <p class="help-text" data-t="touchHint"></p><p class="help-text accent" data-t="startHint"></p><button class="primary full-width" id="controls-play" data-t="letsDrive">LET’S DRIVE</button>
+      </div>
+      <form id="profile-panel" hidden><label><span data-t="name">Pilot name</span><input id="player-name" maxlength="20" autocomplete="nickname" required></label><label><span data-t="region">Region</span><select id="player-region"><option value="GLOBAL" data-t="regionGLOBAL">Worldwide</option><option value="NA" data-t="regionNA">North America</option><option value="SA" data-t="regionSA">South America</option><option value="EU" data-t="regionEU">Europe</option><option value="AS" data-t="regionAS">Asia</option><option value="AF" data-t="regionAF">Africa</option><option value="OC" data-t="regionOC">Oceania</option></select></label><p class="panel-note" data-t="regionHint"></p><button class="primary full-width" type="submit" data-t="save">SAVE PILOT</button></form>
+      <div id="info-panel" hidden><p id="info-body"></p><a id="contact-link" hidden>Contact</a></div>
     </section>
-    <section id="pause-menu" class="pause-menu" hidden>
-      <p class="eyebrow">A MOMENT OF QUIET</p><h2>Enjoy the view.</h2><p>Your drive is paused.</p>
-      <button id="resume" class="primary">KEEP DRIVING <svg viewBox="0 0 20 20"><path d="M4 16 16 4M4 4h12v12"/></svg></button>
-      <label class="volume-control" for="volume"><span>VOLUME</span><input id="volume" type="range" min="0" max="100" value="55"><output id="volume-value" for="volume">55%</output></label>
-      <button id="new-drive" class="text-button">START A NEW DRIVE</button>
-    </section>
-    <div class="location">
-      <div class="route-icon"><svg viewBox="0 0 50 68"><path d="M22 63c0-14 25-9 25-25S5 31 5 16 22 7 22 2"/><path d="M22 63c0-14 25-9 25-25S5 31 5 16 22 7 22 2" class="route-dashes"/><path class="route-arrow" d="m16 63 6-9 6 9Z"/></svg></div>
-      <div><span class="eyebrow">NORTH COAST</span><strong>The midnight route.</strong><span id="road-status">NIGHT HIGHWAY · ENDLESS EXPLORATION</span></div>
-    </div>
-    <div class="vehicle-tag"><span class="tag-line"></span><div><strong>ROADSTER / JETPACK</strong><span>GRAPHITE · FOUR LIFT JETS</span></div></div>
-    <div class="telemetry">
-      <div class="speed-dial"><svg viewBox="0 0 180 130"><path class="dial-background" d="M25 108a75 75 0 1 1 130 0"/><path id="speed-arc" d="M25 108a75 75 0 1 1 130 0" pathLength="100"/><path class="dial-ticks" d="M32 104a67 67 0 1 1 116 0"/></svg><div class="speed-value"><span id="gear">P</span><strong id="speed">0</strong><small>KM/H</small></div></div>
-      <div class="boost-label"><span>POWER BOOST</span><strong id="energy-label">100%</strong></div><div class="boost-track"><div id="energy-fill"></div></div>
-    </div>
-    <div id="controls" class="controls" hidden><span><kbd>W</kbd> Accelerate</span><span><kbd>A</kbd><kbd>D</kbd> Steer</span><span><kbd>S</kbd> Brake / reverse</span><span><kbd>SPACE</kbd> Boost</span><span><kbd>F</kbd> Fly / land</span><span><kbd>G</kbd> Vapor jets</span><span><kbd>R</kbd> Reset car</span><span><kbd>B</kbd> Horn</span><span><kbd>M</kbd> Mute</span><span><kbd>P</kbd> Pause</span></div>
-    <div class="assist"><button id="assist" aria-pressed="true"><i></i> STEERING ASSIST <span>ON</span></button><small id="best">BEST DRIVE 0.00 KM</small></div>
-    <div id="notice" role="status" aria-live="polite"></div>
-    <div class="touch-controls" id="touch-controls" hidden><div><button id="left" aria-label="Steer left">←</button><button id="right" aria-label="Steer right">→</button></div><div><button id="boost" aria-label="Boost">BOOST</button><button id="brake" aria-label="Brake or reverse">BRAKE</button><button id="throttle" aria-label="Accelerate">GO</button></div></div>
-    <p class="credit">An independent Tesla-inspired driving experience.</p>
-    <div id="error" class="error" hidden><h2>3D graphics are unavailable.</h2><p>Open this game in a browser with WebGL 2 and hardware acceleration enabled.</p></div>
-  </main>
-  <script src="game.js"></script>
+  </div>
+  <section class="error-screen" id="error-screen" hidden role="alert"><i class="brand-mark"></i><p class="eyebrow" data-t="error">LET’S GET YOU BACK ON THE ROAD</p><h2 data-t="graphicsError">Your browser couldn’t start the 3D scene.</h2><p id="error-detail"></p><button class="primary" id="retry-button" data-t="retry">TRY AGAIN</button></section>
+</main>
+<script type="module" src="/src/main.ts"></script>
 </body>
 </html>

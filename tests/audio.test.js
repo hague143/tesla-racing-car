@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {drivingSoundMix,createCarAudio} from '../src/audio.js';
-import {createDrive} from '../src/physics.js';
+const createDrive=()=>({speed:0,x:0,z:0,heading:0,altitude:0,steering:0,energy:100});
 
 test('acceleration and speed raise motor pitch, rolling noise and wind',()=>{
   const drive=createDrive(),idle=drivingSoundMix(drive);
